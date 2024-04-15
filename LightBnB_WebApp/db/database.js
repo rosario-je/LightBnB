@@ -160,7 +160,7 @@ const getAllProperties = (options, limit = 10) => {
 
   if (options.minimum_rating) {
     queryParams.push(options.minimum_rating);
-    queryString += `${where ? 'AND' : 'WHERE'} AVG(property_reviews.rating) >= $${queryParams.length} `;
+    queryString += `HAVING AVG(property_reviews.rating) >= $${queryParams.length} `;
   }
 
   // 4
