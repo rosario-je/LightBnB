@@ -224,7 +224,6 @@ const addProperty = function (property) {
     })
     .catch((err) => {
       console.log(err.message);
-      return null;
     })
 };
 
