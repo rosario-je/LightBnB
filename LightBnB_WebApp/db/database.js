@@ -63,7 +63,6 @@ const addUser = function (user) {
     .query(`INSERT INTO users (name, email, password)
   VALUES($1, $2, $3) RETURNING *`, [user.name, user.password, user.email])
     .then((result) => {
-      console.log(result.rows[0]);
       return result.rows[0];
     })
     .catch((err) => {
@@ -82,24 +81,22 @@ const addUser = function (user) {
 const getAllReservations = function (guest_id, limit = 10) {
   return pool
     .query(`SELECT
-  reservations.*,
-  properties.*,
-  avg(rating) as average_rating
-FROM
-  reservations
-  JOIN properties ON reservations.property_id = properties.id
-  JOIN property_reviews ON properties.id = property_reviews.property_id
-WHERE
-  reservations.guest_id = $1 AND reservations.end_date < now()::date
-GROUP BY
-  properties.id,
-  reservations.id
-ORDER BY
-  reservations.start_date
-LIMIT
-  $2;`, [guest_id, limit])
+      reservations.*,
+      properties.*,
+      avg(rating) as average_rating
+    FROM
+      reservations
+      JOIN properties ON reservations.property_id = properties.id
+      JOIN property_reviews ON properties.id = property_reviews.property_id
+    WHERE
+      reservations.guest_id = $1 AND reservations.end_date < now()::date
+    GROUP BY
+      properties.id,
+      reservations.id
+    ORDER BY
+      reservations.start_date
+    LIMIT $2;`, [guest_id, limit])
     .then((result) => {
-      console.log(result.rows);
       return result.rows;
     })
     .catch((err) => {
@@ -117,19 +114,16 @@ LIMIT
  * 
  */
 
-
 const getAllProperties = (options, limit = 10) => {
-  // 1
   const queryParams = [];
   let where = false;
-  // 2
+
   let queryString = `
    SELECT properties.*, avg(property_reviews.rating) as average_rating
    FROM properties
    JOIN property_reviews ON properties.id = property_id
    `;
 
-  // 3 
   // Check if a city has been passed in as an option. Add the city to the params array and create a WHERE for the city.
   if (options.city) {
     queryParams.push(`%${options.city}%`);
@@ -145,22 +139,22 @@ const getAllProperties = (options, limit = 10) => {
     where = true;
   }
 
-  // Check if a minimum_price_per_night and a maximum_price_per_night have been passed in as options. Add these to the params array and add a WHERE to the query.
+  // Check if a minimum_price_per_night and a maximum_price_per_night have been passed in as options. Add to the params array and add a WHERE to the query.
   if (options.minimum_price_per_night && options.maximum_price_per_night) {
-    queryParams.push(options.minimum_price_per_night * 100); // multiply by 100 to get cents
-    queryString += `${where ? 'AND' : 'WHERE'} cost_per_night >= $${queryParams.length} `; // if where is true, add AND, otherwise add WHERE
-    queryParams.push(options.maximum_price_per_night * 100)
+    queryParams.push((options.minimum_price_per_night * 100) / 1); // multiply by 100 to get cents
+    queryString += `${where ? 'AND' : 'WHERE'} cost_per_night >= $${queryParams.length} `;
+    queryParams.push((options.maximum_price_per_night * 100) / 100)
     queryString += `AND cost_per_night <= $${queryParams.length} `;
     where = true;
-  } 
+  }
   else if (options.minimum_price_per_night) { // if only minimum price is provided
-    queryParams.push(options.minimum_price_per_night * 100);
-    queryString += `${where ? 'AND' : 'WHERE'} cost_per_night >= $${queryParams.length} `; // if where is true, add AND, otherwise add WHERE
+    queryParams.push((options.minimum_price_per_night * 100) / 100);
+    queryString += `${where ? 'AND' : 'WHERE'} cost_per_night >= $${queryParams.length} `;
     where = true;
-  } 
+  }
   else if (options.maximum_price_per_night) { // if only maximum price is provided
-    queryParams.push(options.maximum_price_per_night * 100); 
-    queryString += `${where ? 'AND' : 'WHERE'} cost_per_night <= $${queryParams.length} `; 
+    queryParams.push((options.maximum_price_per_night * 100) / 100);
+    queryString += `${where ? 'AND' : 'WHERE'} cost_per_night <= $${queryParams.length} `;
     where = true;
   }
   // Add a GROUP BY and HAVING to the query to get the average rating of each property.
@@ -200,22 +194,22 @@ const getAllProperties = (options, limit = 10) => {
 const addProperty = function (property) {
   return pool.query(
     `INSERT INTO properties (owner_id, title, description, thumbnail_photo_url, cover_photo_url, cost_per_night, street, city, province, post_code, country, parking_spaces, number_of_bathrooms, number_of_bedrooms)
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14 )
-    RETURNING *`, 
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+    RETURNING *`,
     [
       property.owner_id,
-      property.title, 
-      property.description, 
-      property.thumbnail_photo_url, 
-      property.cover_photo_url, 
-      property.cost_per_night, 
-      property.street, 
-      property.city, 
-      property.province, 
+      property.title,
+      property.description,
+      property.thumbnail_photo_url,
+      property.cover_photo_url,
+      property.cost_per_night,
+      property.street,
+      property.city,
+      property.province,
       property.post_code,
-      property.country, 
-      property.parking_spaces, 
-      property.number_of_bathrooms, 
+      property.country,
+      property.parking_spaces,
+      property.number_of_bathrooms,
       property.number_of_bedrooms
     ])
     .then((result) => {
@@ -235,3 +229,6 @@ module.exports = {
   getAllProperties,
   addProperty,
 };
+
+
+
